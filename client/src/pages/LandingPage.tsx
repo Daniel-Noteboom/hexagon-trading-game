@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
 import { usePlayerStore } from '../stores/playerStore'
@@ -11,10 +11,11 @@ export function LandingPage() {
   const { playerId, setPlayer } = usePlayerStore()
 
   // If already registered, go to lobby
-  if (playerId) {
-    navigate('/lobby')
-    return null
-  }
+  useEffect(() => {
+    if (playerId) {
+      navigate('/lobby')
+    }
+  }, [playerId, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
