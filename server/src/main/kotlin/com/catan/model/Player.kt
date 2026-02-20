@@ -11,6 +11,9 @@ enum class DevelopmentCardType {
 }
 
 @Serializable
+enum class AiDifficulty { EASY, MEDIUM, HARD }
+
+@Serializable
 data class Player(
     val id: String,
     val displayName: String,
@@ -26,7 +29,9 @@ data class Player(
     val newDevCards: MutableList<DevelopmentCardType> = mutableListOf(),
     var knightsPlayed: Int = 0,
     var victoryPoints: Int = 0,
-    var hasPlayedDevCardThisTurn: Boolean = false
+    var hasPlayedDevCardThisTurn: Boolean = false,
+    val isAi: Boolean = false,
+    val aiDifficulty: AiDifficulty? = null
 ) {
     fun totalResourceCount(): Int = resources.values.sum()
 
