@@ -1,0 +1,31 @@
+# Gradle
+server/.gradle/
+server/build/
+server/test-results/
+server/local.properties
+*.class
+
+# SQLite
+*.db
+*.db-shm
+*.db-wal
+
+# Node / frontend
+client/node_modules/
+client/dist/
+client/.vite/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local
