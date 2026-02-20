@@ -89,6 +89,16 @@ cd client && npm install && npm run dev
 
 Open `http://localhost:5173` in a browser. The Vite dev server proxies API calls to the backend automatically.
 
+### Multiplayer Setup
+
+The game supports 2-4 players. Each player identity is stored in the browser's `localStorage`, so **one browser = one player**. To play a two-player game locally, you need two separate browser contexts:
+
+- **Two different browsers** (e.g. Chrome + Firefox), or
+- **One regular window + one incognito/private window**, or
+- **Two separate browser profiles**
+
+In the first browser, register a name, create a game, and share the game code. In the second browser, register a different name, then join the game using that code.
+
 ## Tech Stack
 
 - **Backend**: Kotlin 2.0 + Ktor 3.0 + Netty + Exposed ORM + SQLite + Gradle
