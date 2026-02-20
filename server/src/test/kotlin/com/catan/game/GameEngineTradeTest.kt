@@ -36,6 +36,8 @@ class GameEngineTradeTest {
         val p0 = state.playerById("player0")!!
         val p1 = state.playerById("player1")!!
 
+        p0.resources.replaceAll { _, _ -> 0 }
+        p1.resources.replaceAll { _, _ -> 0 }
         p0.resources[ResourceType.BRICK] = 2
         p1.resources[ResourceType.ORE] = 1
 
