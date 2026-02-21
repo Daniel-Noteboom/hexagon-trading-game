@@ -38,6 +38,8 @@ export interface Port {
   portType: PortType
 }
 
+export type AiDifficulty = 'EASY' | 'MEDIUM' | 'HARD'
+
 export interface Player {
   id: string
   displayName: string
@@ -48,6 +50,8 @@ export interface Player {
   knightsPlayed: number
   victoryPoints: number
   hasPlayedDevCardThisTurn: boolean
+  isAi: boolean
+  aiDifficulty: AiDifficulty | null
 }
 
 export interface Building {

@@ -21,6 +21,7 @@ export function OpponentBar({ players, myPlayerId, currentPlayerIndex }: Props) 
             <div style={styles.nameRow}>
               <span style={{ ...styles.dot, background: PLAYER_COLORS[p.color as PlayerColor] }} />
               <span style={styles.name}>{p.displayName}</span>
+              {p.isAi && <span style={styles.aiBadge}>AI</span>}
             </div>
             <div style={styles.stats}>
               <span title="Victory Points" style={styles.stat}>{p.victoryPoints} VP</span>
@@ -42,6 +43,7 @@ const styles: Record<string, React.CSSProperties> = {
   nameRow: { display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: 2 },
   dot: { width: 8, height: 8, borderRadius: '50%', display: 'inline-block' },
   name: { fontWeight: 'bold' },
+  aiBadge: { fontSize: '0.6rem', background: '#9b59b6', color: '#fff', padding: '0.1rem 0.3rem', borderRadius: 3, fontWeight: 'normal' },
   stats: { display: 'flex', gap: '0.5rem', fontSize: '0.7rem', color: '#bdc3c7' },
   stat: {},
 }

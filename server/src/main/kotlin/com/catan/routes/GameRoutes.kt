@@ -26,13 +26,26 @@ data class GameInfoResponse(
 )
 
 @Serializable
-data class GamePlayerInfo(val playerId: String, val displayName: String, val color: String, val seatIndex: Int)
+data class GamePlayerInfo(
+    val playerId: String,
+    val displayName: String,
+    val color: String,
+    val seatIndex: Int,
+    val isAi: Boolean = false,
+    val aiDifficulty: String? = null
+)
 
 @Serializable
 data class JoinGameResponse(val color: String, val seatIndex: Int)
 
 @Serializable
 data class GameListResponse(val games: List<GameInfoResponse>)
+
+@Serializable
+data class AddAiRequest(val difficulty: String = "MEDIUM", val name: String? = null)
+
+@Serializable
+data class AddAiResponse(val playerId: String, val color: String)
 
 fun Routing.gameRoutes(gameRepo: GameRepository, playerRepo: PlayerRepository) {
 
@@ -67,15 +80,24 @@ fun Routing.gameRoutes(gameRepo: GameRepository, playerRepo: PlayerRepository) {
         call.respond(HttpStatusCode.OK, CreateGameResponse(game.id))
     }
 
+    fun buildPlayerInfo(gp: com.catan.db.GamePlayerRecord): GamePlayerInfo {
+        val p = playerRepo.findById(gp.playerId)
+        return GamePlayerInfo(
+            gp.playerId,
+            p?.displayName ?: "Unknown",
+            gp.color,
+            gp.seatIndex,
+            gp.isAi,
+            gp.aiDifficulty
+        )
+    }
+
     get("/games") {
         val status = call.request.queryParameters["status"]
         val games = gameRepo.listGames(status)
         val gameInfos = games.map { game ->
             val gamePlayers = gameRepo.getGamePlayers(game.id)
-            val playerInfos = gamePlayers.map { gp ->
-                val p = playerRepo.findById(gp.playerId)
-                GamePlayerInfo(gp.playerId, p?.displayName ?: "Unknown", gp.color, gp.seatIndex)
-            }
+            val playerInfos = gamePlayers.map { gp -> buildPlayerInfo(gp) }
             GameInfoResponse(game.id, game.status, game.hostPlayerId, game.maxPlayers, playerInfos)
         }
         call.respond(HttpStatusCode.OK, GameListResponse(gameInfos))
@@ -90,10 +112,7 @@ fun Routing.gameRoutes(gameRepo: GameRepository, playerRepo: PlayerRepository) {
         }
 
         val gamePlayers = gameRepo.getGamePlayers(gameId)
-        val playerInfos = gamePlayers.map { gp ->
-            val p = playerRepo.findById(gp.playerId)
-            GamePlayerInfo(gp.playerId, p?.displayName ?: "Unknown", gp.color, gp.seatIndex)
-        }
+        val playerInfos = gamePlayers.map { gp -> buildPlayerInfo(gp) }
 
         call.respond(HttpStatusCode.OK, GameInfoResponse(game.id, game.status, game.hostPlayerId, game.maxPlayers, playerInfos))
     }
@@ -138,6 +157,61 @@ fun Routing.gameRoutes(gameRepo: GameRepository, playerRepo: PlayerRepository) {
         call.respond(HttpStatusCode.OK, JoinGameResponse(availableColor.name, seatIndex))
     }
 
+    post("/games/{gameId}/add-ai") {
+        val token = call.request.header("X-Session-Token")
+        val player = authenticatePlayer(token)
+        if (player == null) {
+            call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Invalid session token"))
+            return@post
+        }
+
+        val gameId = call.parameters["gameId"]!!
+        val game = gameRepo.getGame(gameId)
+        if (game == null) {
+            call.respond(HttpStatusCode.NotFound, mapOf("error" to "Game not found"))
+            return@post
+        }
+
+        if (game.status != "LOBBY") {
+            call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Game is not in lobby"))
+            return@post
+        }
+
+        val currentCount = gameRepo.getGamePlayerCount(gameId)
+        if (currentCount >= game.maxPlayers) {
+            call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Game is full"))
+            return@post
+        }
+
+        val request = try {
+            call.receive<AddAiRequest>()
+        } catch (_: Exception) {
+            AddAiRequest()
+        }
+
+        val difficulty = try {
+            AiDifficulty.valueOf(request.difficulty.uppercase())
+        } catch (_: Exception) {
+            call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid difficulty. Use EASY, MEDIUM, or HARD"))
+            return@post
+        }
+
+        val aiNames = listOf("Bot Alice", "Bot Bob", "Bot Charlie", "Bot Diana")
+        val existingNames = gameRepo.getGamePlayers(gameId).map { playerRepo.findById(it.playerId)?.displayName }
+        val botName = request.name ?: aiNames.first { it !in existingNames }
+
+        // Create a player record for the AI bot
+        val botPlayer = playerRepo.createPlayer(botName)
+
+        val colors = PlayerColor.entries.toList()
+        val usedColors = gameRepo.getGamePlayers(gameId).map { it.color }
+        val availableColor = colors.first { it.name !in usedColors }
+        val seatIndex = currentCount
+
+        gameRepo.addPlayerToGame(gameId, botPlayer.id, availableColor, seatIndex, isAi = true, aiDifficulty = difficulty.name)
+        call.respond(HttpStatusCode.OK, AddAiResponse(botPlayer.id, availableColor.name))
+    }
+
     post("/games/{gameId}/start") {
         val token = call.request.header("X-Session-Token")
         val player = authenticatePlayer(token)
@@ -177,7 +251,9 @@ fun Routing.gameRoutes(gameRepo: GameRepository, playerRepo: PlayerRepository) {
             Player(
                 id = gp.playerId,
                 displayName = p.displayName,
-                color = PlayerColor.valueOf(gp.color)
+                color = PlayerColor.valueOf(gp.color),
+                isAi = gp.isAi,
+                aiDifficulty = if (gp.isAi && gp.aiDifficulty != null) AiDifficulty.valueOf(gp.aiDifficulty) else null
             )
         }.toMutableList()
 

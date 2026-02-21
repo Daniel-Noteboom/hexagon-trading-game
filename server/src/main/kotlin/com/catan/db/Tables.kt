@@ -29,6 +29,8 @@ object GamePlayersTable : Table("game_players") {
     val playerId = varchar("player_id", 36).references(PlayersTable.id)
     val color = varchar("color", 10)  // RED, BLUE, WHITE, ORANGE
     val seatIndex = integer("seat_index")
+    val isAi = bool("is_ai").default(false)
+    val aiDifficulty = varchar("ai_difficulty", 10).nullable()  // EASY, MEDIUM, HARD
 
     override val primaryKey = PrimaryKey(gameId, playerId)
 }

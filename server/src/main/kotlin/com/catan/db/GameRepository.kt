@@ -22,7 +22,9 @@ data class GamePlayerRecord(
     val gameId: String,
     val playerId: String,
     val color: String,
-    val seatIndex: Int
+    val seatIndex: Int,
+    val isAi: Boolean = false,
+    val aiDifficulty: String? = null
 )
 
 class GameRepository {
@@ -103,13 +105,22 @@ class GameRepository {
         }
     }
 
-    fun addPlayerToGame(gameId: String, playerId: String, color: PlayerColor, seatIndex: Int) {
+    fun addPlayerToGame(
+        gameId: String,
+        playerId: String,
+        color: PlayerColor,
+        seatIndex: Int,
+        isAi: Boolean = false,
+        aiDifficulty: String? = null
+    ) {
         transaction {
             GamePlayersTable.insert {
                 it[GamePlayersTable.gameId] = gameId
                 it[GamePlayersTable.playerId] = playerId
                 it[GamePlayersTable.color] = color.name
                 it[GamePlayersTable.seatIndex] = seatIndex
+                it[GamePlayersTable.isAi] = isAi
+                it[GamePlayersTable.aiDifficulty] = aiDifficulty
             }
         }
     }
@@ -122,7 +133,9 @@ class GameRepository {
                     gameId = it[GamePlayersTable.gameId],
                     playerId = it[GamePlayersTable.playerId],
                     color = it[GamePlayersTable.color],
-                    seatIndex = it[GamePlayersTable.seatIndex]
+                    seatIndex = it[GamePlayersTable.seatIndex],
+                    isAi = it[GamePlayersTable.isAi],
+                    aiDifficulty = it[GamePlayersTable.aiDifficulty]
                 )
             }
     }

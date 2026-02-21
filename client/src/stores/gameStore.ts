@@ -32,6 +32,8 @@ function normalizeGameState(raw: any): GameState {
       knightsPlayed: p.knightsPlayed ?? 0,
       victoryPoints: p.victoryPoints ?? 0,
       hasPlayedDevCardThisTurn: p.hasPlayedDevCardThisTurn ?? false,
+      isAi: p.isAi ?? false,
+      aiDifficulty: p.aiDifficulty ?? null,
     })),
     currentPlayerIndex: raw.currentPlayerIndex ?? 0,
     phase: raw.phase ?? 'SETUP_FORWARD',

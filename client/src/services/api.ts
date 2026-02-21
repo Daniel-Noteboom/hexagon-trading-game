@@ -39,6 +39,13 @@ export interface GamePlayerInfo {
   displayName: string
   color: string
   seatIndex: number
+  isAi: boolean
+  aiDifficulty: string | null
+}
+
+export interface AddAiResponse {
+  playerId: string
+  color: string
 }
 
 export interface GameInfoResponse {
@@ -82,6 +89,12 @@ export const api = {
 
   startGame: (gameId: string) =>
     request<{ success: boolean }>(`/games/${gameId}/start`, { method: 'POST' }),
+
+  addAiPlayer: (gameId: string, difficulty: string = 'MEDIUM', name?: string) =>
+    request<AddAiResponse>(`/games/${gameId}/add-ai`, {
+      method: 'POST',
+      body: JSON.stringify({ difficulty, ...(name ? { name } : {}) }),
+    }),
 
   getGameState: (gameId: string) =>
     request<import('../types/game').GameState>(`/games/${gameId}/state`),

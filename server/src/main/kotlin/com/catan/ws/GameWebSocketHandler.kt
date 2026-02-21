@@ -47,6 +47,26 @@ fun Routing.gameWebSocket(
         if (currentState != null) {
             val filtered = filterStateForPlayer(currentState, player.id)
             sessionManager.sendToPlayer(gameId, player.id, ServerEvent.GameStateUpdate(filtered))
+
+            // Trigger AI if current player is AI (e.g., during setup phase)
+            if (currentState.phase != GamePhase.FINISHED && currentState.currentPlayer().isAi) {
+                aiController.onStateChanged(
+                    gameId = gameId,
+                    state = currentState,
+                    saveState = { gId, s ->
+                        gameRepo.saveGameState(gId, s)
+                        if (s.phase == GamePhase.FINISHED) {
+                            gameRepo.updateGameStatus(gId, "FINISHED")
+                        }
+                    },
+                    broadcastState = { s ->
+                        for (p in s.players) {
+                            val f = filterStateForPlayer(s, p.id)
+                            sessionManager.sendToPlayer(gameId, p.id, ServerEvent.GameStateUpdate(f))
+                        }
+                    }
+                )
+            }
         }
 
         try {

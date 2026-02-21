@@ -10,7 +10,7 @@ fun Application.configureDatabase() {
     val dbPath = environment.config.propertyOrNull("database.path")?.getString() ?: "./catan.db"
     Database.connect(url = "jdbc:sqlite:$dbPath", driver = "org.sqlite.JDBC")
     transaction {
-        SchemaUtils.create(PlayersTable, GamesTable, GamePlayersTable, GameActionsTable)
+        SchemaUtils.createMissingTablesAndColumns(PlayersTable, GamesTable, GamePlayersTable, GameActionsTable)
     }
     log.info("Database connected: jdbc:sqlite:$dbPath")
 }
