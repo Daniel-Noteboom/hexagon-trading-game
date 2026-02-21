@@ -52,16 +52,23 @@ function normalizeGameState(raw: any): GameState {
   }
 }
 
+export interface TradeResult {
+  type: 'accepted' | 'declined'
+  playerName: string
+}
+
 interface GameStore {
   gameState: GameState | null
   connected: boolean
   error: string | null
   lastDiceRoll: [number, number] | null
+  tradeResult: TradeResult | null
   setGameState: (state: GameState) => void
   setConnected: (connected: boolean) => void
   setError: (error: string | null) => void
   dismissError: () => void
   setLastDiceRoll: (roll: [number, number] | null) => void
+  setTradeResult: (result: TradeResult | null) => void
   clear: () => void
 }
 
@@ -70,6 +77,7 @@ export const useGameStore = create<GameStore>((set) => ({
   connected: false,
   error: null,
   lastDiceRoll: null,
+  tradeResult: null,
   setGameState: (state) => set({ gameState: normalizeGameState(state) }),
   setConnected: (connected) => set({ connected }),
   setError: (error) => {
@@ -82,5 +90,13 @@ export const useGameStore = create<GameStore>((set) => ({
   },
   dismissError: () => set({ error: null }),
   setLastDiceRoll: (roll) => set({ lastDiceRoll: roll }),
-  clear: () => set({ gameState: null, connected: false, error: null, lastDiceRoll: null }),
+  setTradeResult: (result) => {
+    set({ tradeResult: result })
+    if (result) {
+      setTimeout(() => {
+        if (useGameStore.getState().tradeResult === result) set({ tradeResult: null })
+      }, 4000)
+    }
+  },
+  clear: () => set({ gameState: null, connected: false, error: null, lastDiceRoll: null, tradeResult: null }),
 }))

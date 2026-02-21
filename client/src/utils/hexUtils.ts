@@ -1,4 +1,4 @@
-import type { VertexCoord, EdgeCoord } from '../types/game'
+import type { VertexCoord, EdgeCoord, HexCoord } from '../types/game'
 
 export function sameVertex(a: VertexCoord, b: VertexCoord): boolean {
   return a.q === b.q && a.r === b.r && a.dir === b.dir
@@ -46,6 +46,22 @@ export function edgesOfVertex(vertex: VertexCoord): EdgeCoord[] {
  * Returns the 2-3 vertices adjacent to a vertex (connected by an edge).
  * Ported from backend HexUtils.kt adjacentVertices().
  */
+/**
+ * Returns the 6 vertices of a hex tile.
+ * Ported from backend HexUtils.kt verticesOfHex().
+ */
+export function verticesOfHex(hex: HexCoord): VertexCoord[] {
+  const { q, r } = hex
+  return [
+    { q, r, dir: 'N' },
+    { q: q - 1, r, dir: 'S' },
+    { q: q + 1, r: r - 1, dir: 'N' },
+    { q, r, dir: 'S' },
+    { q: q + 1, r, dir: 'N' },
+    { q: q - 1, r: r + 1, dir: 'S' },
+  ]
+}
+
 export function adjacentVertices(vertex: VertexCoord): VertexCoord[] {
   const { q, r, dir } = vertex
   if (dir === 'N') {

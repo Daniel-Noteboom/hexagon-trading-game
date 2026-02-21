@@ -200,6 +200,14 @@ private suspend fun sendDeltaEvents(
                 sessionManager.broadcast(gameId, ServerEvent.TradeOffered(trade))
             }
         }
+        is GameAction.AcceptTrade -> {
+            val player = newState.playerById(playerId)
+            sessionManager.broadcast(gameId, ServerEvent.TradeAccepted(playerId, player?.displayName ?: ""))
+        }
+        is GameAction.DeclineTrade -> {
+            val player = newState.playerById(playerId)
+            sessionManager.broadcast(gameId, ServerEvent.TradeDeclined(playerId, player?.displayName ?: ""))
+        }
         is GameAction.EndTurn -> {
             val currentPlayer = newState.players[newState.currentPlayerIndex]
             sessionManager.broadcast(gameId, ServerEvent.TurnChanged(currentPlayer.id, newState.currentPlayerIndex))

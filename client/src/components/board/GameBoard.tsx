@@ -175,8 +175,12 @@ function VertexClickTargets({ gameState, myPlayerId, onClick }: { gameState: Gam
   }
 
   const isValidVertex = (v: VertexCoord): boolean => {
-    // Already occupied
-    if (gameState.buildings.some(b => sameVertex(b.vertex, v))) return false
+    // Check if vertex is occupied
+    const existingBuilding = gameState.buildings.find(b => sameVertex(b.vertex, v))
+    if (existingBuilding) {
+      // Allow clicking own settlements (for city upgrade) during main phase
+      return !isSetup && existingBuilding.playerId === myPlayerId && existingBuilding.type === 'SETTLEMENT'
+    }
     // Distance rule: no adjacent buildings
     if (adjacentVertices(v).some(adj => gameState.buildings.some(b => sameVertex(b.vertex, adj)))) return false
     // During setup, skip road connectivity check

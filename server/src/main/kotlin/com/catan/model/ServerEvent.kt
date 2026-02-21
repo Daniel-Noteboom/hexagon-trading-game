@@ -20,6 +20,12 @@ sealed class ServerEvent {
     @Serializable @SerialName("TRADE_OFFERED")
     data class TradeOffered(val trade: TradeOffer) : ServerEvent()
 
+    @Serializable @SerialName("TRADE_ACCEPTED")
+    data class TradeAccepted(val acceptedBy: String, val acceptedByName: String) : ServerEvent()
+
+    @Serializable @SerialName("TRADE_DECLINED")
+    data class TradeDeclined(val declinedBy: String, val declinedByName: String) : ServerEvent()
+
     @Serializable @SerialName("TURN_CHANGED")
     data class TurnChanged(val playerId: String, val playerIndex: Int) : ServerEvent()
 

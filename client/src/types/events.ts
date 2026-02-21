@@ -6,6 +6,8 @@ export type ServerEvent =
   | { type: 'BUILDING_PLACED'; building: Building }
   | { type: 'ROAD_PLACED'; road: Road }
   | { type: 'TRADE_OFFERED'; trade: TradeOffer }
+  | { type: 'TRADE_ACCEPTED'; acceptedBy: string; acceptedByName: string }
+  | { type: 'TRADE_DECLINED'; declinedBy: string; declinedByName: string }
   | { type: 'TURN_CHANGED'; playerId: string; playerIndex: number }
   | { type: 'GAME_OVER'; winnerId: string; winnerName: string }
   | { type: 'ERROR'; message: string }

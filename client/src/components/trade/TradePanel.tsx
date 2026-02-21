@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { GameState, ResourceType } from '../../types/game'
 import { RESOURCE_NAMES, RESOURCE_COLORS } from '../../types/game'
 import { gameWebSocket } from '../../services/websocket'
+import { useGameStore } from '../../stores/gameStore'
 
 interface Props {
   gameState: GameState
@@ -18,6 +19,7 @@ export function TradePanel({ gameState, myPlayerId, isMyTurn }: Props) {
   const [bankGiving, setBankGiving] = useState<ResourceType>('BRICK')
   const [bankReceiving, setBankReceiving] = useState<ResourceType>('ORE')
 
+  const tradeResult = useGameStore(s => s.tradeResult)
   const canTrade = isMyTurn && gameState.phase === 'MAIN' && gameState.turnPhase === 'TRADE_BUILD'
   const pendingTrade = gameState.pendingTrade
 
@@ -72,6 +74,21 @@ export function TradePanel({ gameState, myPlayerId, isMyTurn }: Props) {
   const resetAmounts = () => {
     setOffering({ BRICK: 0, LUMBER: 0, ORE: 0, GRAIN: 0, WOOL: 0 })
     setRequesting({ BRICK: 0, LUMBER: 0, ORE: 0, GRAIN: 0, WOOL: 0 })
+  }
+
+  // Show trade result notification
+  if (tradeResult && !pendingTrade) {
+    const isAccepted = tradeResult.type === 'accepted'
+    return (
+      <div style={styles.panel}>
+        <div style={{
+          ...styles.title,
+          color: isAccepted ? '#27ae60' : '#e74c3c',
+        }}>
+          Trade {isAccepted ? 'accepted' : 'declined'} by {tradeResult.playerName}
+        </div>
+      </div>
+    )
   }
 
   // Show incoming trade offer

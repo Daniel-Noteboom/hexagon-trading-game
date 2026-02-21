@@ -71,6 +71,12 @@ class GameWebSocket {
       case 'ERROR':
         store.setError(event.message)
         break
+      case 'TRADE_ACCEPTED':
+        store.setTradeResult({ type: 'accepted', playerName: event.acceptedByName })
+        break
+      case 'TRADE_DECLINED':
+        store.setTradeResult({ type: 'declined', playerName: event.declinedByName })
+        break
       // Delta events are informational; state update is the source of truth
       case 'BUILDING_PLACED':
       case 'ROAD_PLACED':

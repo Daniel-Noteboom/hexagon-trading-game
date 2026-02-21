@@ -330,6 +330,9 @@ class GameEngine {
         val thief = state.playerById(action.playerId)
             ?: throw IllegalArgumentException("Player not found")
 
+        val validTargets = getStealTargets(state, state.robberLocation, action.playerId)
+        require(action.targetPlayerId in validTargets) { "Target player has no building on the robber hex" }
+
         require(target.totalResourceCount() > 0) { "Target has no resources" }
 
         // Steal a random resource

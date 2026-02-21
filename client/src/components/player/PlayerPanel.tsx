@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Player, GameState, ResourceType, DevelopmentCardType } from '../../types/game'
 import { RESOURCE_COLORS, RESOURCE_NAMES, BUILDING_COSTS, PLAYER_COLORS } from '../../types/game'
 import { gameWebSocket } from '../../services/websocket'
+import { verticesOfHex, sameVertex } from '../../utils/hexUtils'
 
 const ALL_RESOURCES: ResourceType[] = ['BRICK', 'LUMBER', 'ORE', 'GRAIN', 'WOOL']
 
@@ -180,7 +181,15 @@ export function PlayerPanel({ player, gameState, isMyTurn }: Props) {
           <div style={styles.sectionTitle}>Choose a player to steal from</div>
           <div style={styles.actions}>
             {gameState.players
-              .filter(p => p.id !== player.id)
+              .filter(p => {
+                if (p.id === player.id) return false
+                const totalRes = Object.values(p.resources).reduce((a, b) => a + b, 0)
+                if (totalRes === 0) return false
+                const robberVertices = verticesOfHex(gameState.robberLocation)
+                return gameState.buildings.some(b =>
+                  b.playerId === p.id && robberVertices.some(rv => sameVertex(rv, b.vertex))
+                )
+              })
               .map(p => (
                 <button
                   key={p.id}
