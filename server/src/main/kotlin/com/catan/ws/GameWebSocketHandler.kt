@@ -1,5 +1,6 @@
 package com.catan.ws
 
+import com.catan.ai.AiController
 import com.catan.db.GameRepository
 import com.catan.db.PlayerRepository
 import com.catan.game.GameEngine
@@ -14,7 +15,8 @@ fun Routing.gameWebSocket(
     gameRepo: GameRepository,
     playerRepo: PlayerRepository,
     sessionManager: GameSessionManager,
-    engine: GameEngine
+    engine: GameEngine,
+    aiController: AiController = AiController(engine)
 ) {
     webSocket("/games/{gameId}/ws") {
         val gameId = call.parameters["gameId"]
@@ -51,7 +53,7 @@ fun Routing.gameWebSocket(
             for (frame in incoming) {
                 if (frame is Frame.Text) {
                     val text = frame.readText()
-                    handleAction(gameId, player.id, text, gameRepo, sessionManager, engine)
+                    handleAction(gameId, player.id, text, gameRepo, sessionManager, engine, aiController)
                 }
             }
         } finally {
@@ -68,7 +70,8 @@ private suspend fun handleAction(
     text: String,
     gameRepo: GameRepository,
     sessionManager: GameSessionManager,
-    engine: GameEngine
+    engine: GameEngine,
+    aiController: AiController
 ) {
     try {
         // Parse the incoming JSON and inject the playerId (client doesn't send it)
@@ -120,6 +123,24 @@ private suspend fun handleAction(
 
         // Send supplementary delta events
         sendDeltaEvents(gameId, playerId, action, currentState, newState, sessionManager)
+
+        // Trigger AI turns if the next player is AI
+        aiController.onStateChanged(
+            gameId = gameId,
+            state = newState,
+            saveState = { gId, s ->
+                gameRepo.saveGameState(gId, s)
+                if (s.phase == GamePhase.FINISHED) {
+                    gameRepo.updateGameStatus(gId, "FINISHED")
+                }
+            },
+            broadcastState = { s ->
+                for (p in s.players) {
+                    val filtered = filterStateForPlayer(s, p.id)
+                    sessionManager.sendToPlayer(gameId, p.id, ServerEvent.GameStateUpdate(filtered))
+                }
+            }
+        )
 
     } catch (e: Exception) {
         sessionManager.sendToPlayer(gameId, playerId, ServerEvent.Error(e.message ?: "Server error"))

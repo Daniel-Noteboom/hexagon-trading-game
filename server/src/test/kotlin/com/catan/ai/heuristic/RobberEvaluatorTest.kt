@@ -134,18 +134,23 @@ class RobberEvaluatorTest {
         // Place opponent buildings on a high-prob and low-prob hex
         val opponentId = state.players.first { it.id != playerId }.id
 
+        // Find hexes without any of AI's own buildings
+        fun hasOwnBuilding(hex: HexCoord): Boolean {
+            return HexUtils.verticesOfHex(hex).any { state.buildingAt(it)?.playerId == playerId }
+        }
+
         val highProbHex = state.tiles.firstOrNull {
-            (it.diceNumber == 6 || it.diceNumber == 8) && it.coord != state.robberLocation
+            (it.diceNumber == 6 || it.diceNumber == 8) && it.coord != state.robberLocation && !hasOwnBuilding(it.coord)
         }?.coord
 
         val lowProbHex = state.tiles.firstOrNull {
-            (it.diceNumber == 2 || it.diceNumber == 12) && it.coord != state.robberLocation
+            (it.diceNumber == 2 || it.diceNumber == 12) && it.coord != state.robberLocation && !hasOwnBuilding(it.coord)
         }?.coord
 
         if (highProbHex != null && lowProbHex != null) {
-            // Add opponent buildings on both
-            val highVert = HexUtils.verticesOfHex(highProbHex).first { state.buildingAt(it) == null }
-            val lowVert = HexUtils.verticesOfHex(lowProbHex).first { state.buildingAt(it) == null }
+            // Add opponent buildings on both (skip if no free vertices)
+            val highVert = HexUtils.verticesOfHex(highProbHex).firstOrNull { state.buildingAt(it) == null } ?: return
+            val lowVert = HexUtils.verticesOfHex(lowProbHex).firstOrNull { state.buildingAt(it) == null } ?: return
             state.buildings.add(Building(highVert, opponentId, BuildingType.SETTLEMENT))
             state.buildings.add(Building(lowVert, opponentId, BuildingType.SETTLEMENT))
 

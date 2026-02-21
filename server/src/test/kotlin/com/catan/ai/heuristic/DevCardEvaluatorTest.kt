@@ -70,22 +70,40 @@ class DevCardEvaluatorTest {
         val player = state.playerById(playerId)!!
         player.devCards.add(DevelopmentCardType.KNIGHT)
 
-        // Move robber to a hex where AI has a building
+        // Move robber to a hex where AI has a building (but wasn't there before)
         val ownBuilding = state.buildings.first { it.playerId == playerId }
-        val ownHex = com.catan.game.HexUtils.hexesOfVertex(ownBuilding.vertex).first()
-        val newTiles = state.tiles.map {
+        val ownHex = com.catan.game.HexUtils.hexesOfVertex(ownBuilding.vertex)
+            .firstOrNull { it != state.robberLocation }
+        if (ownHex == null) return // Skip if robber is already on all own hexes
+
+        // Create a state where robber is NOT on own hex (baseline)
+        val farHex = com.catan.game.HexUtils.ALL_HEX_COORDS.first { hex ->
+            hex != state.robberLocation &&
+            com.catan.game.HexUtils.verticesOfHex(hex).none { v ->
+                state.buildingAt(v)?.playerId == playerId
+            }
+        }
+        val baselineTiles = state.tiles.map {
+            when {
+                it.hasRobber -> it.copy(hasRobber = false)
+                it.coord == farHex -> it.copy(hasRobber = true)
+                else -> it
+            }
+        }
+        val baselineState = state.copy(tiles = baselineTiles, robberLocation = farHex)
+
+        // Create a state where robber IS on own hex
+        val robberTiles = state.tiles.map {
             when {
                 it.hasRobber -> it.copy(hasRobber = false)
                 it.coord == ownHex -> it.copy(hasRobber = true)
                 else -> it
             }
         }
-        val stateWithRobber = state.copy(tiles = newTiles, robberLocation = ownHex)
+        val stateWithRobber = state.copy(tiles = robberTiles, robberLocation = ownHex)
 
         val scoreWithRobber = DevCardEvaluator.scorePlayKnight(stateWithRobber, playerId)
-
-        // Compare with robber not on own hex
-        val scoreWithout = DevCardEvaluator.scorePlayKnight(state, playerId)
+        val scoreWithout = DevCardEvaluator.scorePlayKnight(baselineState, playerId)
 
         assertTrue(scoreWithRobber > scoreWithout,
             "Knight with robber on own hex ($scoreWithRobber) should score higher than without ($scoreWithout)")
